@@ -122,37 +122,30 @@ export function TeamDetailsPage() {
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: `${primary}09` }}>
 
-      {/* ── Team switcher ── */}
-      <div className="bg-bg-deep border-b border-white/[0.06] py-3 sm:py-4">
+      {/* ── Team switcher — mobile only ── */}
+      <div className="sm:hidden bg-bg-deep border-b border-white/[0.06] py-3">
         <div className="max-w-7xl mx-auto px-4">
           <div className="overflow-x-auto no-scrollbar py-1">
-          <div className="flex gap-4 px-2 w-max mx-auto">
-            {allTeams.map(t => {
-              const isActive = t.id === team.id;
-              return (
-                <Link
-                  key={t.id}
-                  to={`/team/${t.id}`}
-                  className="relative w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300"
-                  style={isActive ? {
-                    background: `${primary}18`,
-                    boxShadow: `0 0 0 1.5px ${primary}45, 0 0 28px ${primary}50, 0 0 10px ${primary}30`,
-                    opacity: 1,
-                  } : {
-                    opacity: 0.55,
-                  }}
-                >
-                  <img
-                    src={`/logos/${t.id}.png`}
-                    alt={t.shortName}
-                    className="w-10 h-10 object-contain transition-transform duration-300"
-                    style={isActive ? { filter: `drop-shadow(0 0 6px ${primary}70)` } : {}}
-                    onError={e => { (e.target as HTMLImageElement).src = t.logoUrl; }}
-                  />
-                </Link>
-              );
-            })}
-          </div>
+            <div className="flex gap-5 sm:gap-10 px-2 w-max mx-auto">
+              {allTeams.map(t => {
+                const isActive = t.id === team.id;
+                return (
+                  <Link
+                    key={t.id}
+                    to={`/team/${t.id}`}
+                    className="flex-shrink-0 flex items-center justify-center transition-all duration-300"
+                    style={{ opacity: isActive ? 1 : 0.35 }}
+                  >
+                    <img
+                      src={`/logos/${t.id}.png`}
+                      alt={t.shortName}
+                      className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain"
+                      onError={e => { (e.target as HTMLImageElement).src = t.logoUrl; }}
+                    />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -210,7 +203,7 @@ export function TeamDetailsPage() {
           </>
         )}
 
-        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-8 relative z-10">
           <div className="flex items-center gap-3">
 
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -251,6 +244,30 @@ export function TeamDetailsPage() {
         {todaysScorers.length > 0 && (
           <ScorerTicker scorers={todaysScorers} primaryColor={primary} />
         )}
+
+        {/* Desktop team switcher — lives inside the hero */}
+        <div className="hidden sm:block max-w-7xl mx-auto px-8 pb-6 relative z-10">
+          <div className="flex justify-center gap-8 lg:gap-14">
+            {allTeams.map(t => {
+              const isActive = t.id === team.id;
+              return (
+                <Link
+                  key={t.id}
+                  to={`/team/${t.id}`}
+                  className="flex-shrink-0 transition-all duration-300"
+                  style={{ opacity: isActive ? 1 : 0.28 }}
+                >
+                  <img
+                    src={`/logos/${t.id}.png`}
+                    alt={t.shortName}
+                    className="w-16 h-16 lg:w-24 lg:h-24 object-contain"
+                    onError={e => { (e.target as HTMLImageElement).src = t.logoUrl; }}
+                  />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Tab strip */}
         <div className="bg-white rounded-t-3xl max-w-7xl mx-auto px-6 pt-4 mt-3">
