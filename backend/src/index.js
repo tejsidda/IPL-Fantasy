@@ -6,7 +6,13 @@ const { syncPoints } = require('./services/pointsSync');
 const { syncGamedayStats } = require('./services/gamedaySync');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://ipl-fantasy-neu.vercel.app',
+    /\.vercel\.app$/,
+    'http://localhost:3000',
+  ]
+}));
 app.use(express.json());
 
 app.use('/api/seasons', require('./routes/seasons'));
@@ -46,6 +52,6 @@ cron.schedule('0 19 * * *', async () => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`IPL Auction backend running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`IPL Auction backend running on port ${PORT}`);
 });
