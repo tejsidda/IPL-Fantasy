@@ -33,6 +33,13 @@ export const LeaderboardPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [selectedSeason]);
 
+  const [chartKey, setChartKey] = useState(0);
+  useEffect(() => {
+    const handler = () => setChartKey(k => k + 1);
+    window.addEventListener('orientationchange', handler);
+    return () => window.removeEventListener('orientationchange', handler);
+  }, []);
+
   const sortedTeams    = [...data.standings].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
   const activeSeason   = seasons.find(s => s.is_active);
   const pastSeasons    = seasons.filter(s => !s.is_active).sort((a, b) => b.id.localeCompare(a.id));
@@ -294,7 +301,7 @@ export const LeaderboardPage: React.FC = () => {
               Chart data will appear after multiple syncs.
             </div>
           ) : (
-            <div className="h-64 w-full">
+            <div key={chartKey} className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
