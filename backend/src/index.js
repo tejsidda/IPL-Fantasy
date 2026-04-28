@@ -27,9 +27,9 @@ app.use('/api/trades',   require('./routes/trades'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-// Points sync twice daily during IPL season
-// 10:00 UTC = 3:30 PM IST  |  14:00 UTC = 7:30 PM IST
-cron.schedule('0 10,14 * * *', async () => {
+// Points sync every hour during match hours
+// 09:00–20:00 UTC = 2:30 PM–1:30 AM IST, covers both afternoon + evening matches incl. late finishes
+cron.schedule('0 9-20 * * *', async () => {
   console.log('[cron] Auto-syncing points...');
   try {
     const result = await syncPoints();
