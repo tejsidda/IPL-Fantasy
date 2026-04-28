@@ -216,7 +216,15 @@ export function TeamDetailsPage() {
                 <div className="flex items-center gap-2 mb-0.5">
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-white leading-tight">{team.name}</h1>
                 </div>
-                {team.owner && team.owner !== team.name && team.owner !== 'Unknown' && (
+                {wonSeasons.length > 0 && (
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <img src="https://www.iplt20.com/assets/images/teams-trophy-new.png" alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0" />
+                    <span className="text-sm sm:text-base font-bold" style={{ color: '#F5C842', letterSpacing: '0.04em' }}>
+                      Champions · {wonSeasons.map(s => s.replace(/^IPL\s*/i, '')).join(' · ')}
+                    </span>
+                  </div>
+                )}
+                {team.owner && team.owner !== team.name && team.owner !== 'Unknown' && team.owner !== 'TBD' && (
                   <p className="text-white/35 text-micro font-medium mb-1">{team.owner}</p>
                 )}
                 <div className="flex items-center gap-1.5 flex-wrap">
