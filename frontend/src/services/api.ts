@@ -35,11 +35,15 @@ export async function fetchSeasons(): Promise<Season[]> {
   return res.json();
 }
 
+let _teamsCache: Promise<Team[]> | null = null;
 export async function fetchTeams(season?: string): Promise<Team[]> {
   const params = season ? `?season=${season}` : '';
-  const res = await fetch(`${API_URL}/api/teams${params}`);
-  if (!res.ok) throw new Error('Failed to fetch teams');
-  return res.json();
+  if (!season && _teamsCache) return _teamsCache;
+  const p = fetch(`${API_URL}/api/teams${params}`)
+    .then(res => { if (!res.ok) throw new Error('Failed to fetch teams'); return res.json() as Promise<Team[]>; })
+    .catch(err => { if (!season) _teamsCache = null; throw err; });
+  if (!season) _teamsCache = p;
+  return p;
 }
 
 export async function fetchTeam(id: string, season?: string): Promise<Team> {
@@ -75,10 +79,14 @@ export async function fetchPlayer(apiId: string, season?: string): Promise<impor
   return res.json();
 }
 
+let _championsCache: Promise<SeasonChampion[]> | null = null;
 export async function fetchChampions(): Promise<SeasonChampion[]> {
-  const res = await fetch(`${API_URL}/api/seasons/champions`);
-  if (!res.ok) throw new Error('Failed to fetch champions');
-  return res.json();
+  if (_championsCache) return _championsCache;
+  const p = fetch(`${API_URL}/api/seasons/champions`)
+    .then(res => { if (!res.ok) throw new Error('Failed to fetch champions'); return res.json() as Promise<SeasonChampion[]>; })
+    .catch(err => { _championsCache = null; throw err; });
+  _championsCache = p;
+  return p;
 }
 
 export async function triggerSync(): Promise<{ success: boolean; date: string; matched: number; total: number }> {
@@ -127,10 +135,14 @@ export interface UpcomingFixtures {
   matches: UpcomingMatch[];
 }
 
+let _fixturesCache: Promise<UpcomingFixtures> | null = null;
 export async function fetchUpcomingFixtures(): Promise<UpcomingFixtures> {
-  const res = await fetch(`${API_URL}/api/fixtures/upcoming`);
-  if (!res.ok) throw new Error('Failed to fetch upcoming fixtures');
-  return res.json();
+  if (_fixturesCache) return _fixturesCache;
+  const p = fetch(`${API_URL}/api/fixtures/upcoming`)
+    .then(res => { if (!res.ok) throw new Error('Failed to fetch upcoming fixtures'); return res.json() as Promise<UpcomingFixtures>; })
+    .catch(err => { _fixturesCache = null; throw err; });
+  _fixturesCache = p;
+  return p;
 }
 
 export async function fetchSearch(q: string): Promise<SearchResult> {

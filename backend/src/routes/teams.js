@@ -16,28 +16,19 @@ router.get('/', async (req, res) => {
     if (error) throw error;
     if (!seasonId) return res.json([]);
 
-    const { data: dates } = await supabase
+    const { data: recentPoints } = await supabase
       .from('team_points_history')
-      .select('snapshot_date')
+      .select('fantasy_team_id, total_points, snapshot_date')
       .eq('season', seasonId)
       .order('snapshot_date', { ascending: false })
-      .limit(16);
+      .limit(20);
 
-    const uniqueDates = [...new Set((dates || []).map(d => d.snapshot_date))];
+    const uniqueDates = [...new Set((recentPoints || []).map(d => d.snapshot_date))];
     const latestDate = uniqueDates[0];
     const prevDate = uniqueDates[1];
 
-    const [{ data: currentPoints }, { data: prevPoints }] = await Promise.all([
-      latestDate
-        ? supabase.from('team_points_history').select('*').eq('season', seasonId).eq('snapshot_date', latestDate)
-        : Promise.resolve({ data: [] }),
-      prevDate
-        ? supabase.from('team_points_history').select('*').eq('season', seasonId).eq('snapshot_date', prevDate)
-        : Promise.resolve({ data: [] })
-    ]);
-
-    const currentMap = Object.fromEntries((currentPoints || []).map(p => [p.fantasy_team_id, parseFloat(p.total_points)]));
-    const prevMap = Object.fromEntries((prevPoints || []).map(p => [p.fantasy_team_id, parseFloat(p.total_points)]));
+    const currentMap = Object.fromEntries((recentPoints || []).filter(r => r.snapshot_date === latestDate).map(p => [p.fantasy_team_id, parseFloat(p.total_points)]));
+    const prevMap    = Object.fromEntries((recentPoints || []).filter(r => r.snapshot_date === prevDate).map(p => [p.fantasy_team_id, parseFloat(p.total_points)]));
 
     const withPoints = teams.map(t => ({
       ...t,
@@ -93,43 +84,32 @@ router.get('/:id', async (req, res) => {
     // correctly since player_points_history retains the old fantasy_team_id from sync time
     const playerNames = (players || []).map(p => p.name);
 
-    const { data: dateRows } = playerNames.length
-      ? await supabase
-          .from('player_points_history')
-          .select('snapshot_date')
-          .in('player_name', playerNames)
-          .eq('season', seasonId)
-          .order('snapshot_date', { ascending: false })
-          .limit(120)
-      : { data: [] };
-    const uniqueDates = [...new Set((dateRows || []).map(r => r.snapshot_date))];
-    const latestDate = uniqueDates[0];
-    const prevDate   = uniqueDates[1];
-
-    const [{ data: playerPoints }, { data: prevPlayerPoints }, { data: allTeamPoints }, { data: recentGameStats }] = await Promise.all([
-      latestDate && playerNames.length
-        ? supabase.from('player_points_history').select('player_name, points').eq('snapshot_date', latestDate).eq('season', seasonId).in('player_name', playerNames)
+    // Single parallel batch — no sequential date-lookup hop
+    const [{ data: recentPlayerPoints }, { data: recentTeamPoints }, { data: recentGameStats }] = await Promise.all([
+      playerNames.length
+        ? supabase.from('player_points_history').select('player_name, points, snapshot_date').in('player_name', playerNames).eq('season', seasonId).order('snapshot_date', { ascending: false }).limit(120)
         : Promise.resolve({ data: [] }),
-      prevDate && playerNames.length
-        ? supabase.from('player_points_history').select('player_name, points').eq('snapshot_date', prevDate).eq('season', seasonId).in('player_name', playerNames)
-        : Promise.resolve({ data: [] }),
-      latestDate
-        ? supabase.from('team_points_history').select('fantasy_team_id, total_points').eq('snapshot_date', latestDate).eq('season', seasonId)
-        : Promise.resolve({ data: [] }),
-      // Most recent game score per player (for "to watch" logic: last game > 50 pts)
+      supabase.from('team_points_history').select('fantasy_team_id, total_points, snapshot_date').eq('season', seasonId).order('snapshot_date', { ascending: false }).limit(20),
       playerNames.length
         ? supabase.from('player_gameday_stats').select('player_name, overall_points, gameday_id').in('player_name', playerNames).eq('season', seasonId).order('gameday_id', { ascending: false }).limit(100)
         : Promise.resolve({ data: [] })
     ]);
 
-    const pointsMap     = Object.fromEntries((playerPoints     || []).map(p => [p.player_name, parseFloat(p.points)]));
-    const prevPointsMap = Object.fromEntries((prevPlayerPoints || []).map(p => [p.player_name, parseFloat(p.points)]));
+    const playerDates    = [...new Set((recentPlayerPoints || []).map(r => r.snapshot_date))];
+    const latestDate     = playerDates[0];
+    const prevDate       = playerDates[1];
+    const latestTeamDate = [...new Set((recentTeamPoints || []).map(r => r.snapshot_date))][0];
+
+    const pointsMap     = Object.fromEntries((recentPlayerPoints || []).filter(r => r.snapshot_date === latestDate).map(p => [p.player_name, parseFloat(p.points)]));
+    const prevPointsMap = Object.fromEntries((recentPlayerPoints || []).filter(r => r.snapshot_date === prevDate).map(p => [p.player_name, parseFloat(p.points)]));
+    const allTeamPoints = (recentTeamPoints || []).filter(r => r.snapshot_date === latestTeamDate);
+
     // Most recent game score per player — take first occurrence (query ordered desc by gameday_id)
     const lastGameMap = {};
     for (const s of (recentGameStats || [])) {
       if (!(s.player_name in lastGameMap)) lastGameMap[s.player_name] = parseFloat(s.overall_points);
     }
-    const sortedTotals = (allTeamPoints || []).sort((a, b) => b.total_points - a.total_points);
+    const sortedTotals = allTeamPoints.sort((a, b) => b.total_points - a.total_points);
     const rank = sortedTotals.findIndex(t => t.fantasy_team_id === id) + 1;
     const teamTotal = sortedTotals.find(t => t.fantasy_team_id === id)?.total_points ?? 0;
 

@@ -74,7 +74,7 @@ export function TeamDetailsPage() {
       .finally(() => { setTradesLoading(false); setTradesLoaded(true); });
   }, [activeTab, tradesLoaded, id]);
 
-  if (loading) return (
+  if (loading && !team) return (
     <div className="min-h-screen bg-bg-deep flex items-center justify-center">
       <div className="text-white/30 text-sm font-medium tracking-widest uppercase">Loading…</div>
     </div>
