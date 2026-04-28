@@ -17,7 +17,6 @@ const TEAM_NAMES: Record<string, string> = {
 const NAV_LINKS = [
   { label: 'Points Table', to: '/points-table' },
   { label: 'Teams',        to: '/' },
-  { label: 'Admin',        to: '/admin' },
 ];
 
 export function Navbar() {
