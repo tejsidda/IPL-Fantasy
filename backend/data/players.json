@@ -1,0 +1,181 @@
+{
+  "_note": "Player 'name' fields must EXACTLY match the IPL Fantasy API player.Name values. Verify by checking the API at https://fantasy.iplt20.com/classic/api/feed/gamedayplayers?lang=en&tourgamedayId=1",
+  "teams": [
+    {
+      "id": "hari",
+      "name": "Hari",
+      "short_name": "HK",
+      "color_primary": "#FFB75E",
+      "color_secondary": "#ED8F03",
+      "championships": "1",
+      "captain": "Hari",
+      "coach": "Hari",
+      "owner": "Hari",
+      "venue": "HK Arena",
+      "players": [
+        { "name": "Sanju Samson",      "is_captain": true,  "is_overseas": false, "role": "WK-Batter" },
+        { "name": "Jasprit Bumrah",    "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Noor Ahmad",        "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Romario Shepherd",  "is_captain": false, "is_overseas": true,  "role": "All-Rounder" },
+        { "name": "Cameron Green",     "is_captain": false, "is_overseas": true,  "role": "All-Rounder" },
+        { "name": "Mukesh Kumar",      "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Ryan Rickelton",    "is_captain": false, "is_overseas": true,  "role": "WK-Batter" },
+        { "name": "Ajinkya Rahane",    "is_captain": false, "is_overseas": false, "role": "Batter" }
+      ]
+    },
+    {
+      "id": "pa",
+      "name": "Paul x Ashmitha",
+      "short_name": "PA",
+      "color_primary": "#FF416C",
+      "color_secondary": "#FF4B2B",
+      "championships": "1",
+      "captain": "Paul",
+      "coach": "Ashmitha",
+      "owner": "TBD",
+      "venue": "Royal Stadium",
+      "players": [
+        { "name": "Yashasvi Jaiswal",  "is_captain": true,  "is_overseas": false, "role": "Batter" },
+        { "name": "Ruturaj Gaikwad",   "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Aiden Markram",     "is_captain": false, "is_overseas": true,  "role": "Batter" },
+        { "name": "Hardik Pandya",     "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Shubman Gill",      "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Priyansh Arya",     "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Rohit Sharma",      "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Tilak Varma",       "is_captain": false, "is_overseas": false, "role": "Batter" }
+      ]
+    },
+    {
+      "id": "kp",
+      "name": "Kushal & Parthiv",
+      "short_name": "KP",
+      "color_primary": "#0575E6",
+      "color_secondary": "#021B79",
+      "championships": "2",
+      "captain": "Kushal",
+      "coach": "Parthiv",
+      "owner": "Unknown",
+      "venue": "Titans Ground",
+      "players": [
+        { "name": "Axar Patel",            "is_captain": true,  "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Vaibhav Suryavanshi",   "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Ayush Mhatre",          "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Ramandeep Singh",       "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Mohammed Siraj",        "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Ayush Badoni",          "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Cooper Connolly",       "is_captain": false, "is_overseas": true,  "role": "All-Rounder" },
+        { "name": "Heinrich Klaasen",      "is_captain": false, "is_overseas": true,  "role": "WK-Batter" }
+      ]
+    },
+    {
+      "id": "apr",
+      "name": "Aiyappan & Reshma",
+      "short_name": "APR",
+      "color_primary": "#11998E",
+      "color_secondary": "#38EF7D",
+      "championships": "0",
+      "captain": "Aiyappan",
+      "coach": "Reshma",
+      "owner": "TBD",
+      "venue": "Emerald Park",
+      "players": [
+        { "name": "Suryakumar Yadav",  "is_captain": true,  "is_overseas": false, "role": "Batter" },
+        { "name": "Rajat Patidar",     "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Ravindra Jadeja",   "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Jamie Overton",     "is_captain": false, "is_overseas": true,  "role": "All-Rounder" },
+        { "name": "Washington Sundar", "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Travis Head",       "is_captain": false, "is_overseas": true,  "role": "Batter" },
+        { "name": "Tristan Stubbs",    "is_captain": false, "is_overseas": true,  "role": "WK-Batter" },
+        { "name": "Rovman Powell",     "is_captain": false, "is_overseas": true,  "role": "Batter" }
+      ]
+    },
+    {
+      "id": "tr",
+      "name": "Tej & Rixith",
+      "short_name": "TR",
+      "color_primary": "#8E2DE2",
+      "color_secondary": "#4A00E0",
+      "championships": "1",
+      "captain": "Tej",
+      "coach": "Rixith",
+      "owner": "TBD",
+      "venue": "Thunder Dome",
+      "players": [
+        { "name": "Ishan Kishan",      "is_captain": true,  "is_overseas": false, "role": "WK-Batter" },
+        { "name": "Abhishek Sharma",   "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Rinku Singh",       "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Harsh Dubey",       "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Prasidh Krishna",   "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Shreyas Iyer",      "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Sameer Rizvi",      "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Vaibhav Arora",     "is_captain": false, "is_overseas": false, "role": "Bowler" }
+      ]
+    },
+    {
+      "id": "ab",
+      "name": "Anjith & Basil",
+      "short_name": "AB",
+      "color_primary": "#FF8008",
+      "color_secondary": "#FFC837",
+      "championships": "0",
+      "captain": "Anjith",
+      "coach": "Basil",
+      "owner": "TBD",
+      "venue": "Sun Stadium",
+      "players": [
+        { "name": "Quinton de Kock",       "is_captain": true,  "is_overseas": true,  "role": "WK-Batter" },
+        { "name": "Varun Chakaravarthy",   "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Dewald Brevis",         "is_captain": false, "is_overseas": true,  "role": "Batter" },
+        { "name": "Shashank Singh",        "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Angkrish Raghuvanshi", "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "Mohammad Shami",        "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Lungi Ngidi",           "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Krunal Pandya",         "is_captain": false, "is_overseas": false, "role": "All-Rounder" }
+      ]
+    },
+    {
+      "id": "ds",
+      "name": "Deepthi & Sanjana",
+      "short_name": "DS",
+      "color_primary": "#ec008c",
+      "color_secondary": "#fc6767",
+      "championships": "1",
+      "captain": "Deepthi",
+      "coach": "Sanjana",
+      "owner": "TBD",
+      "venue": "Pink Panther Arena",
+      "players": [
+        { "name": "Rishabh Pant",          "is_captain": true,  "is_overseas": false, "role": "WK-Batter" },
+        { "name": "Jos Buttler",           "is_captain": false, "is_overseas": true,  "role": "WK-Batter" },
+        { "name": "Sunil Narine",          "is_captain": false, "is_overseas": true,  "role": "All-Rounder" },
+        { "name": "Rashid Khan",           "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Ravi Bishnoi",          "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Nitish Kumar Reddy",    "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Jacob Duffy",           "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Shivam Dube",           "is_captain": false, "is_overseas": false, "role": "All-Rounder" }
+      ]
+    },
+    {
+      "id": "ar2",
+      "name": "Ani & Rakshith",
+      "short_name": "AR",
+      "color_primary": "#3a7bd5",
+      "color_secondary": "#3a6073",
+      "championships": "0",
+      "captain": "Ani",
+      "coach": "Rakshith",
+      "owner": "TBD",
+      "venue": "Slate Ground",
+      "players": [
+        { "name": "Virat Kohli",       "is_captain": true,  "is_overseas": false, "role": "Batter" },
+        { "name": "Sai Sudharsan",     "is_captain": false, "is_overseas": false, "role": "Batter" },
+        { "name": "KL Rahul",          "is_captain": false, "is_overseas": false, "role": "WK-Batter" },
+        { "name": "Arshdeep Singh",    "is_captain": false, "is_overseas": false, "role": "Bowler" },
+        { "name": "Kagiso Rabada",     "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Prince Yadav",      "is_captain": false, "is_overseas": false, "role": "All-Rounder" },
+        { "name": "Eshan Malinga",     "is_captain": false, "is_overseas": true,  "role": "Bowler" },
+        { "name": "Bhuvneshwar Kumar", "is_captain": false, "is_overseas": false, "role": "Bowler" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Cricket Teams Roster",
+  "description": "An application to view cricket teams and their player rosters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
