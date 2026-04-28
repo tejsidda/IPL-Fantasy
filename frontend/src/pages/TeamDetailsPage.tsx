@@ -125,7 +125,8 @@ export function TeamDetailsPage() {
       {/* ── Team switcher ── */}
       <div className="bg-bg-deep border-b border-white/[0.06] py-3 sm:py-4">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center gap-4 overflow-x-auto no-scrollbar py-1 px-2">
+          <div className="overflow-x-auto no-scrollbar py-1">
+          <div className="flex gap-4 px-2 w-max mx-auto">
             {allTeams.map(t => {
               const isActive = t.id === team.id;
               return (
@@ -151,6 +152,7 @@ export function TeamDetailsPage() {
                 </Link>
               );
             })}
+          </div>
           </div>
         </div>
       </div>
@@ -402,7 +404,7 @@ export function TeamDetailsPage() {
                   </h2>
                 </div>
                 {filteredPlayers.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
                     {filteredPlayers.map(p => <PlayerRow key={p.id} player={p} teamColor={primary} />)}
                   </div>
                 ) : (
@@ -528,7 +530,7 @@ function RoleSection({ title, players, teamColor }: { title: string; players: Pl
         <h2 className="text-xs font-black uppercase tracking-widest text-gray-600">{title}</h2>
         <span className="text-micro font-black px-2 py-0.5 rounded-full" style={{ background: `${teamColor}18`, color: teamColor }}>{players.length}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
         {players.map(p => <PlayerRow key={p.id} player={p} teamColor={teamColor} />)}
       </div>
     </div>
@@ -544,19 +546,19 @@ const PlayerRow: React.FC<{ player: Player; teamColor: string }> = ({ player, te
   const iplLogo    = getIplLogo(player.iplTeam ?? '');
   return (
     <div
-      className={cn('bg-white rounded-xl flex items-center gap-3 p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg', canNavigate ? 'cursor-pointer' : 'cursor-default')}
+      className={cn('bg-white rounded-xl flex items-center gap-2 p-2 sm:gap-3 sm:p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg', canNavigate ? 'cursor-pointer' : 'cursor-default')}
       style={{ boxShadow: `0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px ${teamColor}18` }}
       onClick={() => canNavigate && navigate(`/player/${player.apiId}`)}
     >
-      <div className="w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center relative text-sm font-black" style={{ background: `linear-gradient(135deg, ${teamColor}22, ${teamColor}0a)`, color: `${teamColor}70` }}>
+      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center relative text-sm font-black" style={{ background: `linear-gradient(135deg, ${teamColor}22, ${teamColor}0a)`, color: `${teamColor}70` }}>
         {hasPhoto ? <img src={player.imageUrl} alt={player.name} onError={() => setImgErr(true)} className="w-full h-full object-cover object-top" /> : initials}
         {player.isCaptain && (
-          <div className="absolute bottom-0 right-0 w-5 h-5 rounded-tl-lg flex items-center justify-center text-[9px] font-black text-white" style={{ backgroundColor: teamColor }}>C</div>
+          <div className="absolute bottom-0 right-0 w-4 h-4 sm:w-5 sm:h-5 rounded-tl-lg flex items-center justify-center text-[8px] font-black text-white" style={{ backgroundColor: teamColor }}>C</div>
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold text-gray-900 text-sm leading-tight truncate">{player.name}</span>
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="font-bold text-gray-900 text-xs sm:text-sm leading-tight truncate">{player.name}</span>
           {player.isOverseas && (
             <span className="text-[9px] font-black tracking-wide px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: `${teamColor}18`, color: teamColor, border: `1px solid ${teamColor}30` }}>OVS</span>
           )}
