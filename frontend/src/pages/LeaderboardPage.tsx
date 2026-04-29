@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchLeaderboard, fetchSeasons, LeaderboardData, Season } from '../services/api';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { cn } from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Team } from '../types';
 import { TrophyIcon, MedalIcon } from '../components/Icons';
 
@@ -258,25 +258,9 @@ export const LeaderboardPage: React.FC = () => {
               <div className="overflow-y-auto max-h-[260px] lg:max-h-none thin-scroll">
                 {data.topPerformers.map((p, i) => {
                   const matchedTeam = data.standings.find(t => t.name === p.team);
+                  const canNav = !!p.apiId;
                   return (
-                    <div key={i} className="flex items-center justify-between px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-xs font-black text-gray-300 w-4">{i + 1}</span>
-                        <div className="min-w-0">
-                          <div className="font-bold text-[13px] text-gray-900 truncate">{p.name}</div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            {matchedTeam && (
-                              <img src={`/logos/${matchedTeam.id}.png`} alt="" className="w-3 h-3 object-contain flex-shrink-0"
-                                   onError={e => { (e.target as HTMLImageElement).src = matchedTeam.logoUrl; }} />
-                            )}
-                            <span className="text-micro text-gray-400 font-bold truncate">{p.team}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="num font-semibold text-green-600 text-sm flex-shrink-0 ml-2">
-                        +{p.points}
-                      </div>
-                    </div>
+                    <TopPerformerRow key={i} rank={i + 1} performer={p} matchedTeam={matchedTeam ?? null} canNav={canNav} />
                   );
                 })}
               </div>
@@ -333,6 +317,38 @@ export const LeaderboardPage: React.FC = () => {
     </div>
   );
 };
+
+function TopPerformerRow({ rank, performer, matchedTeam, canNav }: {
+  rank: number;
+  performer: import('../services/api').TopPerformer;
+  matchedTeam: Team | null;
+  canNav: boolean;
+}) {
+  const navigate = useNavigate();
+  return (
+    <div
+      className={cn('flex items-center justify-between px-4 py-3 border-b border-gray-50 transition-colors', canNav ? 'cursor-pointer hover:bg-gray-50' : 'hover:bg-gray-50')}
+      onClick={() => canNav && navigate(`/player/${performer.apiId}`)}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-xs font-black text-gray-300 w-4">{rank}</span>
+        <div className="min-w-0">
+          <div className="font-bold text-[13px] text-gray-900 truncate">{performer.name}</div>
+          <div className="flex items-center gap-1 mt-0.5">
+            {matchedTeam && (
+              <img src={`/logos/${matchedTeam.id}.png`} alt="" className="w-3 h-3 object-contain flex-shrink-0"
+                   onError={e => { (e.target as HTMLImageElement).src = matchedTeam.logoUrl; }} />
+            )}
+            <span className="text-micro text-gray-400 font-bold truncate">{performer.team}</span>
+          </div>
+        </div>
+      </div>
+      <div className="num font-semibold text-green-600 text-sm flex-shrink-0 ml-2">
+        +{performer.points}
+      </div>
+    </div>
+  );
+}
 
 function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: boolean }) {
   const rankChange = team.rankChange ?? 0;

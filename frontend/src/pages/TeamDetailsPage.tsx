@@ -516,13 +516,18 @@ function TodayScorerRow({ player, rank, teamColor }: { player: Player; rank: num
 }
 
 function PlayingPlayerRow({ player, teamColor }: { player: Player; teamColor: string }) {
+  const navigate = useNavigate();
   const [imgErr, setImgErr] = useState(false);
   const hasPhoto = player.imageUrl?.includes('iplt20.com') && !imgErr;
   const initials = player.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   const iplLogo  = getIplLogo(player.iplTeam ?? '');
   const isWatch  = player.lastGamePoints !== null && (player.lastGamePoints ?? 0) > 50;
+  const canNav   = !!player.apiId;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+    <div
+      className={cn('flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors', canNav ? 'cursor-pointer' : '')}
+      onClick={() => canNav && navigate(`/player/${player.apiId}`)}
+    >
       <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-black" style={{ background: `${teamColor}18`, color: `${teamColor}80` }}>
         {hasPhoto ? <img src={player.imageUrl} alt={player.name} onError={() => setImgErr(true)} className="w-full h-full object-cover object-top" /> : initials}
       </div>
@@ -773,12 +778,17 @@ function TradeCard({ trade, playersIn, playersOut, otherTeam, ptIn, ptOut, net, 
 }
 
 function TradePlayerChip({ player, mode }: { player: TradePlayer; mode: 'alltime' | 'since_trade' }) {
+  const navigate = useNavigate();
   const [imgErr, setImgErr] = useState(false);
   const pts = mode === 'alltime' ? player.points_alltime : player.points_since_trade;
   const initials = player.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const canNav = !!player.apiId;
 
   return (
-    <div className="flex flex-col items-center gap-1 w-14">
+    <div
+      className={cn('flex flex-col items-center gap-1 w-14', canNav ? 'cursor-pointer' : '')}
+      onClick={() => canNav && navigate(`/player/${player.apiId}`)}
+    >
       <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-xs font-black text-gray-400 flex-shrink-0">
         {player.apiId && !imgErr ? (
           <img

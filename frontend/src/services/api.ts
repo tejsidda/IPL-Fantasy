@@ -6,6 +6,7 @@ export interface TopPerformer {
   name: string;
   team: string;
   points: number;
+  apiId?: string | null;
 }
 
 export interface ChartDataPoint {

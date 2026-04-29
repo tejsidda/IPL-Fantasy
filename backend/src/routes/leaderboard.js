@@ -10,10 +10,12 @@ router.get('/', async (req, res) => {
     const seasonId = req.query.season || await getActiveSeason();
     if (!seasonId) return res.json({ season: null, standings: [], chartData: [], topPerformers: [] });
 
-    const [{ data: teams }, { data: allHistory }] = await Promise.all([
+    const [{ data: teams }, { data: allHistory }, { data: playerApiIds }] = await Promise.all([
       supabase.from('fantasy_teams').select('*'),
-      supabase.from('team_points_history').select('*').eq('season', seasonId).order('snapshot_date', { ascending: true })
+      supabase.from('team_points_history').select('*').eq('season', seasonId).order('snapshot_date', { ascending: true }),
+      supabase.from('players').select('name, player_api_id').eq('season', seasonId)
     ]);
+    const apiIdMap = Object.fromEntries((playerApiIds || []).map(p => [p.name, p.player_api_id]));
 
     const teamsMap = Object.fromEntries((teams || []).map(t => [t.id, t]));
     const uniqueDates = [...new Set((allHistory || []).map(h => h.snapshot_date))];
@@ -95,7 +97,8 @@ router.get('/', async (req, res) => {
           .map(p => ({
             name: p.player_name,
             team: fx(teamsMap[p.fantasy_team_id]?.name ?? ''),
-            points: parseFloat((parseFloat(p.points) - (prevPlayerMap[p.player_name] ?? 0)).toFixed(2))
+            points: parseFloat((parseFloat(p.points) - (prevPlayerMap[p.player_name] ?? 0)).toFixed(2)),
+            apiId: apiIdMap[p.player_name] || null
           }))
           .filter(p => p.points > 0)
           .sort((a, b) => b.points - a.points)
@@ -105,7 +108,8 @@ router.get('/', async (req, res) => {
           .map(p => ({
             name: p.player_name,
             team: fx(teamsMap[p.fantasy_team_id]?.name ?? ''),
-            points: parseFloat(p.points)
+            points: parseFloat(p.points),
+            apiId: apiIdMap[p.player_name] || null
           }))
           .filter(p => p.points > 0)
           .sort((a, b) => b.points - a.points)
