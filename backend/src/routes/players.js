@@ -4,6 +4,24 @@ const { getLogo } = require('../utils/logo');
 const { getActiveSeason } = require('../utils/seasons');
 const { fx } = require('../utils/formatName');
 
+// GET /api/players?season=X  — all players for a season (for past-trade picker)
+router.get('/', async (req, res) => {
+  try {
+    const seasonId = req.query.season || await getActiveSeason();
+    if (!seasonId) return res.status(503).json({ error: 'No active season' });
+    const { data, error } = await supabase
+      .from('players')
+      .select('id, name, role, ipl_team, player_api_id, fantasy_team_id')
+      .eq('season', seasonId)
+      .order('name', { ascending: true });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/players error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/players/:apiId?season=2026
 router.get('/:apiId', async (req, res) => {
   try {

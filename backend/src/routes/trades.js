@@ -143,16 +143,19 @@ router.get('/', async (req, res) => {
 // POST /api/trades
 router.post('/', async (req, res) => {
   try {
-    const { trade_date, season, team_a_id, team_b_id, notes, players_a_to_b, players_b_to_a } = req.body;
+    const { trade_date, season, team_a_id, team_b_id, notes, players_a_to_b, players_b_to_a, past_trade } = req.body;
     if (!trade_date || !team_a_id || !team_b_id) {
       return res.status(400).json({ error: 'trade_date, team_a_id, team_b_id required' });
+    }
+    if (team_a_id === team_b_id) {
+      return res.status(400).json({ error: 'Cannot trade a team with itself' });
     }
     const seasonId = season || await getActiveSeason();
     if (!seasonId) return res.status(400).json({ error: 'No active season' });
 
     const { data: trade, error } = await supabase
       .from('trades')
-      .insert({ trade_date, season: seasonId, team_a_id, team_b_id, notes: notes || null })
+      .insert({ trade_date, season: seasonId, team_a_id, team_b_id, notes: notes || null, past_trade: !!past_trade })
       .select()
       .single();
     if (error) throw error;
@@ -165,18 +168,20 @@ router.post('/', async (req, res) => {
       const { error: le } = await supabase.from('trade_players').insert(legRows);
       if (le) throw le;
 
-      // Flip fantasy_team_id for each traded player
-      const allMoves = [
-        ...(players_a_to_b || []).map(pid => ({ pid, to: team_b_id })),
-        ...(players_b_to_a || []).map(pid => ({ pid, to: team_a_id })),
-      ];
-      for (const { pid, to } of allMoves) {
-        const { error: ue } = await supabase
-          .from('players')
-          .update({ fantasy_team_id: to })
-          .eq('id', pid)
-          .eq('season', seasonId);
-        if (ue) throw ue;
+      // Flip fantasy_team_id unless this is a past trade (players already on correct teams)
+      if (!past_trade) {
+        const allMoves = [
+          ...(players_a_to_b || []).map(pid => ({ pid, to: team_b_id })),
+          ...(players_b_to_a || []).map(pid => ({ pid, to: team_a_id })),
+        ];
+        for (const { pid, to } of allMoves) {
+          const { error: ue } = await supabase
+            .from('players')
+            .update({ fantasy_team_id: to })
+            .eq('id', pid)
+            .eq('season', seasonId);
+          if (ue) throw ue;
+        }
       }
     }
 
@@ -190,6 +195,55 @@ router.post('/', async (req, res) => {
 // DELETE /api/trades/:id
 router.delete('/:id', async (req, res) => {
   try {
+    const { data: trade, error: te } = await supabase
+      .from('trades')
+      .select('season, past_trade, trade_date')
+      .eq('id', req.params.id)
+      .single();
+    if (te) throw te;
+    if (!trade) return res.status(404).json({ error: 'Trade not found' });
+
+    if (!trade.past_trade) {
+      const { data: legs } = await supabase
+        .from('trade_players')
+        .select('player_id, from_team_id')
+        .eq('trade_id', req.params.id);
+
+      if (legs && legs.length > 0) {
+        const playerIds = legs.map(l => l.player_id);
+
+        // Find any trades in the same season dated AFTER this one that involve these players
+        const { data: laterTrades } = await supabase
+          .from('trades')
+          .select('id')
+          .eq('season', trade.season)
+          .gt('trade_date', trade.trade_date)
+          .neq('id', req.params.id);
+
+        const laterTradeIds = (laterTrades || []).map(t => t.id);
+        const playersWithLaterTrades = new Set();
+
+        if (laterTradeIds.length > 0) {
+          const { data: laterLegs } = await supabase
+            .from('trade_players')
+            .select('player_id')
+            .in('trade_id', laterTradeIds)
+            .in('player_id', playerIds);
+          (laterLegs || []).forEach(l => playersWithLaterTrades.add(l.player_id));
+        }
+
+        for (const leg of legs) {
+          if (playersWithLaterTrades.has(leg.player_id)) continue;
+          const { error: ue } = await supabase
+            .from('players')
+            .update({ fantasy_team_id: leg.from_team_id })
+            .eq('id', leg.player_id)
+            .eq('season', trade.season);
+          if (ue) throw ue;
+        }
+      }
+    }
+
     const { error } = await supabase.from('trades').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ success: true });

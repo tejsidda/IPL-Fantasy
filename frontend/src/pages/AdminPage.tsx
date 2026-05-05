@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { triggerSync, fetchSeasons, fetchTeams, fetchTeam, fetchAllTrades, createTrade, deleteTrade, Season, Trade } from '../services/api';
+import { triggerSync, fetchSeasons, fetchTeams, fetchTeam, fetchAllTrades, fetchAllPlayers, createTrade, deleteTrade, clearTeamCache, Season, Trade, AllPlayer } from '../services/api';
 import { Player } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -56,6 +56,10 @@ export function AdminPage() {
   const [tradeNotes, setTradeNotes]       = useState('');
   const [tradeSubmitting, setTradeSubmitting] = useState(false);
   const [tradeResult, setTradeResult]     = useState<any>(null);
+  const [pastTrade, setPastTrade]         = useState(false);
+  const [allPlayers, setAllPlayers]       = useState<AllPlayer[]>([]);
+  const [searchA, setSearchA]             = useState('');
+  const [searchB, setSearchB]             = useState('');
   const [allTrades, setAllTrades]         = useState<Trade[]>([]);
   const [tradesLoading, setTradesLoading] = useState(false);
 
@@ -92,6 +96,12 @@ export function AdminPage() {
     fetchTeam(tradeTeamB, tradeSeason).then(t => setTeamBPlayers(t.players)).catch(console.error);
   }, [tradeTeamB, tradeSeason]);
 
+  // Load all players when past-trade mode is on
+  useEffect(() => {
+    if (!pastTrade || !tradeSeason) return;
+    fetchAllPlayers(tradeSeason).then(setAllPlayers).catch(console.error);
+  }, [pastTrade, tradeSeason]);
+
   // Load trades list when season changes
   useEffect(() => {
     if (!tradeSeason) return;
@@ -116,9 +126,11 @@ export function AdminPage() {
     setTradeSubmitting(true);
     setTradeResult(null);
     try {
-      await createTrade({ trade_date: tradeDate, season: tradeSeason, team_a_id: tradeTeamA, team_b_id: tradeTeamB, players_a_to_b: playersAtoB, players_b_to_a: playersBtoA, notes: tradeNotes || undefined });
+      await createTrade({ trade_date: tradeDate, season: tradeSeason, team_a_id: tradeTeamA, team_b_id: tradeTeamB, players_a_to_b: playersAtoB, players_b_to_a: playersBtoA, notes: tradeNotes || undefined, past_trade: pastTrade });
+      if (!pastTrade) { clearTeamCache(tradeTeamA); clearTeamCache(tradeTeamB); }
       setTradeResult({ success: true });
       setPlayersAtoB([]); setPlayersBtoA([]); setTradeNotes(''); setTradeTeamA(''); setTradeTeamB('');
+      setPastTrade(false); setSearchA(''); setSearchB('');
       const fresh = await fetchAllTrades(tradeSeason);
       setAllTrades(fresh);
     } catch (e: any) {
@@ -130,9 +142,12 @@ export function AdminPage() {
 
   const handleDeleteTrade = async (id: string) => {
     if (!confirm('Delete this trade?')) return;
+    const trade = allTrades.find(t => t.id === id);
     try {
       await deleteTrade(id);
       setAllTrades(prev => prev.filter(t => t.id !== id));
+      if (trade?.team_a?.id) clearTeamCache(trade.team_a.id);
+      if (trade?.team_b?.id) clearTeamCache(trade.team_b.id);
     } catch (e: any) {
       alert(e.message);
     }
@@ -558,72 +573,126 @@ export function AdminPage() {
             </div>
           </div>
 
-          {/* Player pickers */}
-          {(tradeTeamA || tradeTeamB) && (
+          {/* Player pickers — live trade: roster lists */}
+          {!pastTrade && (tradeTeamA || tradeTeamB) && (
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {/* Team A gives */}
-              <div>
-                <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">
-                  {tradeTeamA ? `${allTeamsList.find(t => t.id === tradeTeamA)?.shortName ?? 'A'} gives` : 'A gives'}
-                </div>
-                <div className="border border-border-light rounded-xl max-h-56 overflow-y-auto divide-y divide-gray-50">
-                  {teamAPlayers.length === 0 && (
-                    <div className="px-3 py-4 text-xs text-gray-400 text-center">{tradeTeamA ? 'Loading…' : 'Pick Team A'}</div>
-                  )}
-                  {teamAPlayers.map(p => {
-                    const pid = p.dbId ?? 0;
-                    const checked = playersAtoB.includes(pid);
-                    return (
-                      <label key={p.id} className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                        <input type="checkbox" checked={checked} onChange={() => pid && togglePlayer(pid, 'a')} className="rounded accent-blue-600" />
-                        <div className="w-7 h-7 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-black text-gray-400">
-                          {p.imageUrl?.includes('iplt20.com')
-                            ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover object-top" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            : p.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold text-gray-800 truncate">{p.name}</div>
-                          <div className="text-[10px] text-gray-400">{p.iplTeam} · {p.role}</div>
-                        </div>
-                        <div className="num text-xs text-gray-500 flex-shrink-0">{Math.round(p.points ?? 0)}</div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Team B gives */}
-              <div>
-                <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">
-                  {tradeTeamB ? `${allTeamsList.find(t => t.id === tradeTeamB)?.shortName ?? 'B'} gives` : 'B gives'}
-                </div>
-                <div className="border border-border-light rounded-xl max-h-56 overflow-y-auto divide-y divide-gray-50">
-                  {teamBPlayers.length === 0 && (
-                    <div className="px-3 py-4 text-xs text-gray-400 text-center">{tradeTeamB ? 'Loading…' : 'Pick Team B'}</div>
-                  )}
-                  {teamBPlayers.map(p => {
-                    const pid = p.dbId ?? 0;
-                    const checked = playersBtoA.includes(pid);
-                    return (
-                      <label key={p.id} className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                        <input type="checkbox" checked={checked} onChange={() => pid && togglePlayer(pid, 'b')} className="rounded accent-blue-600" />
-                        <div className="w-7 h-7 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-black text-gray-400">
-                          {p.imageUrl?.includes('iplt20.com')
-                            ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover object-top" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            : p.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold text-gray-800 truncate">{p.name}</div>
-                          <div className="text-[10px] text-gray-400">{p.iplTeam} · {p.role}</div>
-                        </div>
-                        <div className="num text-xs text-gray-500 flex-shrink-0">{Math.round(p.points ?? 0)}</div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+              {(['a', 'b'] as const).map(side => {
+                const players = side === 'a' ? teamAPlayers : teamBPlayers;
+                const teamId  = side === 'a' ? tradeTeamA : tradeTeamB;
+                const selected = side === 'a' ? playersAtoB : playersBtoA;
+                const label = teamId ? `${allTeamsList.find(t => t.id === teamId)?.shortName ?? side.toUpperCase()} gives` : `${side.toUpperCase()} gives`;
+                return (
+                  <div key={side}>
+                    <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">{label}</div>
+                    <div className="border border-border-light rounded-xl max-h-56 overflow-y-auto divide-y divide-gray-50">
+                      {players.length === 0 && (
+                        <div className="px-3 py-4 text-xs text-gray-400 text-center">{teamId ? 'Loading…' : `Pick Team ${side.toUpperCase()}`}</div>
+                      )}
+                      {players.map(p => {
+                        const pid = p.dbId ?? 0;
+                        const checked = selected.includes(pid);
+                        return (
+                          <label key={p.id} className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                            <input type="checkbox" checked={checked} onChange={() => pid && togglePlayer(pid, side)} className="rounded accent-blue-600" />
+                            <div className="w-7 h-7 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-black text-gray-400">
+                              {p.imageUrl?.includes('iplt20.com')
+                                ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover object-top" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                : p.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-bold text-gray-800 truncate">{p.name}</div>
+                              <div className="text-[10px] text-gray-400">{p.iplTeam} · {p.role}</div>
+                            </div>
+                            <div className="num text-xs text-gray-500 flex-shrink-0">{Math.round(p.points ?? 0)}</div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Player pickers — past trade: search all players */}
+          {pastTrade && (tradeTeamA || tradeTeamB) && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {(['a', 'b'] as const).map(side => {
+                const teamId  = side === 'a' ? tradeTeamA : tradeTeamB;
+                const selected = side === 'a' ? playersAtoB : playersBtoA;
+                const search  = side === 'a' ? searchA : searchB;
+                const setSearch = side === 'a' ? setSearchA : setSearchB;
+                const label = teamId ? `${allTeamsList.find(t => t.id === teamId)?.shortName ?? side.toUpperCase()} gave` : `${side.toUpperCase()} gave`;
+                const results = allPlayers.filter(p =>
+                  search.length >= 1 &&
+                  p.name.toLowerCase().includes(search.toLowerCase()) &&
+                  !playersAtoB.includes(p.id) &&
+                  !playersBtoA.includes(p.id)
+                );
+                return (
+                  <div key={side}>
+                    <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">{label}</div>
+                    {/* Selected chips */}
+                    {selected.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {selected.map(pid => {
+                          const p = allPlayers.find(x => x.id === pid);
+                          return p ? (
+                            <span key={pid} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full px-2.5 py-1">
+                              {p.name}
+                              <button onClick={() => togglePlayer(pid, side)} className="ml-0.5 hover:text-blue-600 leading-none">×</button>
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                    {/* Search input + dropdown */}
+                    <div className="relative">
+                      <input
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder={allPlayers.length ? 'Search players…' : 'Loading players…'}
+                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {search && results.length > 0 && (
+                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg max-h-44 overflow-y-auto mt-1">
+                          {results.map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => { togglePlayer(p.id, side); setSearch(''); }}
+                              className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-50 last:border-0"
+                            >
+                              <span className="text-xs font-bold text-gray-800">{p.name}</span>
+                              <span className="text-[10px] text-gray-400 ml-1.5">{p.ipl_team} · {p.role} · now at {allTeamsList.find(t => t.id === p.fantasy_team_id)?.shortName ?? p.fantasy_team_id}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {search && results.length === 0 && (
+                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg mt-1 px-3 py-2 text-xs text-gray-400">
+                          No players found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Past trade toggle */}
+          <label className="flex items-center gap-2.5 mb-4 cursor-pointer select-none w-fit">
+            <input
+              type="checkbox"
+              checked={pastTrade}
+              onChange={e => { setPastTrade(e.target.checked); setPlayersAtoB([]); setPlayersBtoA([]); setSearchA(''); setSearchB(''); }}
+              className="rounded accent-blue-600 w-4 h-4"
+            />
+            <div>
+              <span className="text-sm font-bold text-gray-700">Players already on correct teams</span>
+              <span className="text-xs text-gray-400 ml-2">(past trade — squads won't be moved)</span>
+            </div>
+          </label>
 
           {/* Notes + submit */}
           <div className="flex gap-3 mb-3">

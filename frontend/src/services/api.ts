@@ -47,11 +47,23 @@ export async function fetchTeams(season?: string): Promise<Team[]> {
   return p;
 }
 
+const _teamCache = new Map<string, { promise: Promise<Team>; at: number }>();
+const TEAM_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+export function clearTeamCache(id?: string) {
+  if (id) { _teamCache.forEach((_, k) => { if (k.startsWith(id)) _teamCache.delete(k); }); }
+  else _teamCache.clear();
+}
+
 export async function fetchTeam(id: string, season?: string): Promise<Team> {
   const params = season ? `?season=${season}` : '';
-  const res = await fetch(`${API_URL}/api/teams/${id}${params}`);
-  if (!res.ok) throw new Error('Team not found');
-  return res.json();
+  const cacheKey = `${id}${params}`;
+  const cached = _teamCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < TEAM_CACHE_TTL) return cached.promise;
+  const p = fetch(`${API_URL}/api/teams/${id}${params}`)
+    .then(res => { if (!res.ok) throw new Error('Team not found'); return res.json() as Promise<Team>; })
+    .catch(err => { _teamCache.delete(cacheKey); throw err; });
+  _teamCache.set(cacheKey, { promise: p, at: Date.now() });
+  return p;
 }
 
 export async function fetchLeaderboard(season?: string): Promise<LeaderboardData> {
@@ -71,6 +83,22 @@ export interface SeasonChampion {
     logoUrl: string;
     points: number;
   };
+}
+
+export interface AllPlayer {
+  id: number;
+  name: string;
+  role: string;
+  ipl_team: string;
+  player_api_id: string | null;
+  fantasy_team_id: string;
+}
+
+export async function fetchAllPlayers(season?: string): Promise<AllPlayer[]> {
+  const params = season ? `?season=${season}` : '';
+  const res = await fetch(`${API_URL}/api/players${params}`);
+  if (!res.ok) throw new Error('Failed to fetch players');
+  return res.json();
 }
 
 export async function fetchPlayer(apiId: string, season?: string): Promise<import('../types').PlayerDetail> {
@@ -205,6 +233,7 @@ export async function createTrade(data: {
   notes?: string;
   players_a_to_b: number[];
   players_b_to_a: number[];
+  past_trade?: boolean;
 }): Promise<{ success: boolean; id: string }> {
   const res = await fetch(`${API_URL}/api/trades`, {
     method: 'POST',

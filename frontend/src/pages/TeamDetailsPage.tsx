@@ -537,7 +537,7 @@ function PlayingPlayerRow({ player, teamColor }: { player: Player; teamColor: st
           {player.isCaptain && <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white flex-shrink-0" style={{ backgroundColor: teamColor }}>C</span>}
         </div>
         <div className="flex items-center gap-1 mt-0.5">
-          {iplLogo && <img src={iplLogo} alt="" className="w-3 h-3 object-contain opacity-55 flex-shrink-0" />}
+          {iplLogo && <img src={iplLogo} alt="" className="w-3 h-3 object-contain flex-shrink-0" />}
           <span className="text-label text-gray-400 truncate">{player.iplTeam}{player.role ? ` · ${player.role}` : ''}</span>
         </div>
       </div>
@@ -595,7 +595,7 @@ const PlayerRow: React.FC<{ player: Player; teamColor: string }> = ({ player, te
         </div>
         {player.iplTeam && (
           <div className="flex items-center gap-1 mt-0.5">
-            {iplLogo && <img src={iplLogo} alt="" className="w-3.5 h-3.5 object-contain opacity-55 flex-shrink-0" />}
+            {iplLogo && <img src={iplLogo} alt="" className="w-3.5 h-3.5 object-contain flex-shrink-0" />}
             <p className="text-label text-gray-400 font-medium">{player.iplTeam}</p>
           </div>
         )}

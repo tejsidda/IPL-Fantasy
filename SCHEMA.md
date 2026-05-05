@@ -103,6 +103,7 @@ One row per trade event (always between exactly two teams).
 | `team_a_id` | TEXT FK → `fantasy_teams.id` | |
 | `team_b_id` | TEXT FK → `fantasy_teams.id` | |
 | `notes` | TEXT | Optional label (e.g. "injury swap") |
+| `past_trade` | BOOLEAN | `false` = live trade (squad moved); `true` = past/backdated (squads already correct, deletion won't reverse) |
 | `created_at` | TIMESTAMPTZ | Auto |
 
 ---
@@ -228,6 +229,7 @@ Requires `ipl_team_id` (numeric, sourced from `p.TeamId` in the gamedayplayers f
 | 2026-04 | Create `player_gameday_stats` table | See full DDL below |
 | 2026-04-27 | Create `trades` and `trade_players` tables + indexes | See `backend/schema.sql` |
 | 2026-04-27 | Add `dbId` (players.id) to `/api/teams/:id` player response | Backend only — no migration needed |
+| 2026-05-05 | Add `past_trade` column to `trades` | `ALTER TABLE trades ADD COLUMN IF NOT EXISTS past_trade BOOLEAN DEFAULT false;` |
 
 **`player_gameday_stats` DDL:**
 ```sql
