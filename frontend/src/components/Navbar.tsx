@@ -16,6 +16,7 @@ const TEAM_NAMES: Record<string, string> = {
 
 const NAV_LINKS = [
   { label: 'Points Table', to: '/points-table' },
+  { label: 'Stats',        to: '/stats' },
   { label: 'Teams',        to: '/' },
 ];
 
@@ -59,7 +60,7 @@ export function Navbar() {
 
           {/* Mobile nav — two direct buttons */}
           <div className="flex lg:hidden flex-1 justify-center items-center gap-2 relative z-10">
-            {[{ label: 'Teams', to: '/' }, { label: 'Points Table', to: '/points-table' }].map(({ label, to }) => {
+            {[{ label: 'Teams', to: '/' }, { label: 'Points Table', to: '/points-table' }, { label: 'Stats', to: '/stats' }].map(({ label, to }) => {
               const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
               return (
                 <Link

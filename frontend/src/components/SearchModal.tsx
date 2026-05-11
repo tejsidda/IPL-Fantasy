@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { fetchSearch, SearchResult } from '../services/api';
+import { TeamLogo } from './TeamLogo';
 
 interface Props {
   onClose: () => void;
@@ -91,7 +92,7 @@ export function SearchModal({ onClose }: Props) {
                     className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center p-1.5"
                     style={{ background: `${team.colors.primary}25`, border: `1px solid ${team.colors.primary}40` }}
                   >
-                    <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-contain" />
+                    <TeamLogo team={team} className="w-full h-full" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-bold text-sm">{team.name}</div>
@@ -153,7 +154,7 @@ export function SearchModal({ onClose }: Props) {
                     {/* Auction team — prominent */}
                     {player.fantasyTeam && (
                       <div className="flex items-center gap-1.5">
-                        <img src={player.fantasyTeam.logoUrl} alt="" className="w-4 h-4 object-contain flex-shrink-0" />
+                        <TeamLogo team={{ id: player.fantasyTeam.id, shortName: player.fantasyTeam.name, logoUrl: player.fantasyTeam.logoUrl }} className="w-4 h-4" />
                         <span
                           className="text-label font-black truncate"
                           style={{ color: player.fantasyTeam.colors.primary }}
@@ -163,10 +164,16 @@ export function SearchModal({ onClose }: Props) {
                       </div>
                     )}
 
-                    {/* IPL team + role — secondary */}
+                    {/* IPL team + role + points — secondary */}
                     {(player.iplTeam || player.role) && (
-                      <div className="text-white/30 text-micro mt-0.5 truncate">
-                        {[player.iplTeam, player.role].filter(Boolean).join(' · ')}
+                      <div className="text-white/30 text-micro mt-0.5 truncate flex items-center gap-1">
+                        <span>{[player.iplTeam, player.role].filter(Boolean).join(' · ')}</span>
+                        {player.points > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="num text-white/50 font-bold">{Math.round(player.points).toLocaleString()} pts</span>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

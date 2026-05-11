@@ -139,6 +139,7 @@ export interface SearchResult {
     iplTeam: string;
     isCaptain: boolean;
     isOverseas: boolean;
+    points: number;
     fantasyTeam: {
       id: string;
       name: string;
@@ -247,4 +248,120 @@ export async function createTrade(data: {
 export async function deleteTrade(id: string): Promise<void> {
   const res = await fetch(`${API_URL}/api/trades/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete trade');
+}
+
+// ── Stats ──────────────────────────────────────────────────────────
+
+export interface TradeReportTeam {
+  team: TradeTeam;
+  netPts: number;
+  gained: number;
+  lost: number;
+  tradesCount: number;
+  bestMove: { name: string; apiId: string; iplTeam: string; since_points: number; alltime_points: number; trade_date: string } | null;
+  worstMove: { name: string; apiId: string; iplTeam: string; since_points: number; alltime_points: number; trade_date: string } | null;
+}
+
+export interface CaptainReportTeam {
+  team: TradeTeam;
+  captain: { name: string; apiId: string; role: string; iplTeam: string; actual: number; base: number } | null;
+  shouldHavePicked: { name: string; apiId: string; role: string; iplTeam: string; base: number; ifCaptained: number } | null;
+  missedPoints: number;
+  isOptimal: boolean;
+}
+
+export interface FormPerformance {
+  gameday_id: number;
+  match_date: string;
+  match_label: string;
+  points: number;
+  dnp: boolean;
+}
+
+export interface PlayerForm {
+  name: string;
+  apiId: string;
+  role: string;
+  iplTeam: string;
+  fantasyTeam: TradeTeam | null;
+  last5: FormPerformance[];
+  total: number;
+  dnpCount: number;
+  playedCount?: number;
+}
+
+export interface StatsOverview {
+  season: string;
+  tradeReport: TradeReportTeam[];
+  captainReport: CaptainReportTeam[];
+  hotCold: { hot: PlayerForm[]; cold: PlayerForm[] };
+}
+
+export async function fetchStatsOverview(season?: string): Promise<StatsOverview> {
+  const params = season ? `?season=${season}` : '';
+  const res = await fetch(`${API_URL}/api/stats/overview${params}`);
+  if (!res.ok) throw new Error('Failed to fetch stats');
+  return res.json();
+}
+
+export interface MatchDayPlayer {
+  name: string;
+  apiId: string;
+  iplTeam: string;
+  role: string;
+  points: number;
+}
+
+export interface MatchDay {
+  gameday_id: number;
+  match_date: string;
+  match_label: string;
+  total_points: number;
+  players: MatchDayPlayer[];
+  ipl_teams: string[];
+}
+
+export interface IplCorrelation {
+  ipl_team: string;
+  players: Array<{
+    name: string;
+    apiId: string;
+    role: string;
+    is_captain: boolean;
+    is_overseas: boolean;
+    points: number;
+  }>;
+  player_count: number;
+  points: number;
+  percentage: number;
+}
+
+export interface ScheduleMatch { gameday_id: number; home: string; away: string }
+export interface SchedulePlayerBrief { name: string; apiId: string; role: string; is_captain: boolean }
+export interface ScheduleDay {
+  date: string;
+  label: string;
+  matches: ScheduleMatch[];
+  yourPlayers: SchedulePlayerBrief[];
+  yourPlayerCount: number;
+  conflicts: Array<{ home: string; away: string; players_home: SchedulePlayerBrief[]; players_away: SchedulePlayerBrief[] }>;
+}
+
+export interface TeamStats {
+  team: TradeTeam;
+  summary: { totalPoints: number; playersCount: number; matchesPlayed: number; avgPerMatch: number };
+  captain: CaptainReportTeam;
+  matchDays: MatchDay[];
+  bestDays: MatchDay[];
+  worstDays: MatchDay[];
+  iplCorrelation: IplCorrelation[];
+  schedule: ScheduleDay[];
+  hotCold: { hot: PlayerForm[]; cold: PlayerForm[] };
+}
+
+export async function fetchTeamStats(teamId: string, season?: string): Promise<TeamStats> {
+  const params = season ? `?season=${season}` : '';
+  const res = await fetch(`${API_URL}/api/stats/team/${teamId}${params}`);
+  if (!res.ok) throw new Error('Failed to fetch team stats');
+  return res.json();
 }

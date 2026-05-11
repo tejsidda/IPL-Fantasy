@@ -24,6 +24,7 @@ app.use('/api/import', require('./routes/import'));
 app.use('/api/search',   require('./routes/search'));
 app.use('/api/fixtures', require('./routes/fixtures'));
 app.use('/api/trades',   require('./routes/trades'));
+app.use('/api/stats',    require('./routes/stats'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

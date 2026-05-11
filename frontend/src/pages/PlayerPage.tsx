@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchPlayer } from '../services/api';
 import { PlayerDetail, PlayerGameStat, PlayerTimeline } from '../types';
 import { getIplLogo } from '../utils/iplTeams';
+import { TeamLogo } from '../components/TeamLogo';
 
 export function PlayerPage() {
   const { apiId } = useParams<{ apiId: string }>();
@@ -120,9 +121,7 @@ export function PlayerPage() {
                 <span className="text-white/15 hidden sm:inline">·</span>
                 <Link to={`/team/${player.fantasyTeam.id}`}
                       className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                  <img src={`/logos/${player.fantasyTeam.id}.png`} alt={player.fantasyTeam.name}
-                       className="w-4 h-4 object-contain"
-                       onError={e => { (e.target as HTMLImageElement).src = player.fantasyTeam.logoUrl; }} />
+                  <TeamLogo team={{ id: player.fantasyTeam.id, shortName: player.fantasyTeam.name, logoUrl: player.fantasyTeam.logoUrl }} className="w-4 h-4" />
                   <span className="text-white/45 text-sm font-medium">{player.fantasyTeam.name}</span>
                 </Link>
               </div>

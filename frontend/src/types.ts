@@ -94,6 +94,7 @@ export interface Team {
   rank?: number;
   rankChange?: number;
   pointsChange?: number;
+  points_week?: number;
   gapToFirst?: number;
   gapToNext?: number;
 }

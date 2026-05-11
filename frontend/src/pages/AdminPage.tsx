@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { triggerSync, fetchSeasons, fetchTeams, fetchTeam, fetchAllTrades, fetchAllPlayers, createTrade, deleteTrade, clearTeamCache, Season, Trade, AllPlayer } from '../services/api';
+import { PlayerPhoto } from '../components/PlayerPhoto';
 import { Player } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -594,11 +595,7 @@ export function AdminPage() {
                         return (
                           <label key={p.id} className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
                             <input type="checkbox" checked={checked} onChange={() => pid && togglePlayer(pid, side)} className="rounded accent-blue-600" />
-                            <div className="w-7 h-7 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-black text-gray-400">
-                              {p.imageUrl?.includes('iplt20.com')
-                                ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover object-top" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                : p.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                            </div>
+                            <PlayerPhoto apiId={p.apiId} name={p.name} size="sm" shape="square" />
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-bold text-gray-800 truncate">{p.name}</div>
                               <div className="text-[10px] text-gray-400">{p.iplTeam} · {p.role}</div>
@@ -648,28 +645,42 @@ export function AdminPage() {
                     )}
                     {/* Search input + dropdown */}
                     <div className="relative">
-                      <input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder={allPlayers.length ? 'Search players…' : 'Loading players…'}
-                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                      <div className="relative">
+                        <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="11" cy="11" r="6" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <input
+                          value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          placeholder={allPlayers.length ? 'Search players…' : 'Loading players…'}
+                          className="w-full border border-border-light rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
                       {search && results.length > 0 && (
-                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg max-h-44 overflow-y-auto mt-1">
-                          {results.map(p => (
-                            <button
-                              key={p.id}
-                              onClick={() => { togglePlayer(p.id, side); setSearch(''); }}
-                              className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-50 last:border-0"
-                            >
-                              <span className="text-xs font-bold text-gray-800">{p.name}</span>
-                              <span className="text-[10px] text-gray-400 ml-1.5">{p.ipl_team} · {p.role} · now at {allTeamsList.find(t => t.id === p.fantasy_team_id)?.shortName ?? p.fantasy_team_id}</span>
-                            </button>
-                          ))}
+                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg max-h-52 overflow-y-auto mt-1">
+                          {results.map(p => {
+                            const ft = allTeamsList.find(t => t.id === p.fantasy_team_id);
+                            return (
+                              <button
+                                key={p.id}
+                                onClick={() => { togglePlayer(p.id, side); setSearch(''); }}
+                                className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 flex items-center gap-2.5"
+                              >
+                                <PlayerPhoto apiId={p.player_api_id} name={p.name} size="sm" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-bold text-gray-800 truncate">{p.name}</div>
+                                  <div className="text-[10px] text-gray-400 mt-0.5">{p.ipl_team} · {p.role}</div>
+                                  <div className="text-[10px] font-bold mt-0.5" style={{ color: ft?.colors?.primary ?? '#6b7280' }}>
+                                    {ft?.shortName ?? p.fantasy_team_id}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                       {search && results.length === 0 && (
-                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg mt-1 px-3 py-2 text-xs text-gray-400">
+                        <div className="absolute z-20 top-full left-0 right-0 bg-white border border-border-light rounded-lg shadow-lg mt-1 px-3 py-2.5 text-xs text-gray-400">
                           No players found
                         </div>
                       )}

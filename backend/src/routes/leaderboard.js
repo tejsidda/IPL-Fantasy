@@ -26,6 +26,22 @@ router.get('/', async (req, res) => {
     const prevPoints = (allHistory || []).filter(h => h.snapshot_date === prevDate);
     const prevMap = Object.fromEntries(prevPoints.map(p => [p.fantasy_team_id, parseFloat(p.total_points)]));
 
+    // Week reference: snapshot dated on/before (latest - 7 days). Falls back to 0 if none exists yet.
+    let weekRefMap = {};
+    if (latestDate) {
+      const weekAgo = new Date(latestDate);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgoStr = weekAgo.toISOString().split('T')[0];
+      const weekRefDate = [...uniqueDates].reverse().find(d => d <= weekAgoStr);
+      if (weekRefDate) {
+        weekRefMap = Object.fromEntries(
+          (allHistory || [])
+            .filter(h => h.snapshot_date === weekRefDate)
+            .map(p => [p.fantasy_team_id, parseFloat(p.total_points)])
+        );
+      }
+    }
+
     const sorted = [...currentPoints].sort((a, b) => b.total_points - a.total_points);
     const prevSorted = [...prevPoints].sort((a, b) => b.total_points - a.total_points);
     const prevRankMap = Object.fromEntries(prevSorted.map((t, i) => [t.fantasy_team_id, i + 1]));
@@ -36,6 +52,8 @@ router.get('/', async (req, res) => {
       const currentRank = i + 1;
       const prevRank = prevRankMap[entry.fantasy_team_id] ?? currentRank;
       const prevPts = prevMap[entry.fantasy_team_id] ?? parseFloat(entry.total_points);
+      const weekPts = weekRefMap[entry.fantasy_team_id] ?? 0;
+      const total   = parseFloat(entry.total_points);
       return {
         id: team.id,
         name: fx(team.name),
@@ -47,8 +65,9 @@ router.get('/', async (req, res) => {
         coach: team.coach,
         owner: team.owner,
         venue: team.venue,
-        points: parseFloat(entry.total_points),
-        pointsChange: parseFloat((parseFloat(entry.total_points) - prevPts).toFixed(2)),
+        points: total,
+        pointsChange: parseFloat((total - prevPts).toFixed(2)),
+        points_week: parseFloat((total - weekPts).toFixed(2)),
         rank: currentRank,
         rankChange: prevRank - currentRank,
         players: []

@@ -7,6 +7,7 @@ import { TeamDetailsPage } from './pages/TeamDetailsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { AdminPage } from './pages/AdminPage';
 import { PlayerPage } from './pages/PlayerPage';
+import { StatsPage } from './pages/StatsPage';
 import './index.css';
 
 function ScrollToTop() {
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="points-table" element={<LeaderboardPage />} />
           <Route path="admin" element={<AdminPage />} />
           <Route path="player/:apiId" element={<PlayerPage />} />
+          <Route path="stats" element={<StatsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

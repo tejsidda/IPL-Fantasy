@@ -12,14 +12,37 @@ router.get('/', async (req, res) => {
 
     const seasonId = req.query.season || await getActiveSeason();
 
-    const [{ data: teams }, { data: players }] = await Promise.all([
+    const [{ data: teams }, { data: players }, { data: allTeams }] = await Promise.all([
       supabase.from('fantasy_teams').select('*').ilike('name', `%${q}%`).limit(5),
       seasonId
         ? supabase.from('players').select('name, role, ipl_team, player_api_id, fantasy_team_id, is_captain, is_overseas').eq('season', seasonId).ilike('name', `%${q}%`).limit(10)
-        : Promise.resolve({ data: [] })
+        : Promise.resolve({ data: [] }),
+      supabase.from('fantasy_teams').select('*'),
     ]);
 
-    const teamMap = Object.fromEntries((teams || []).map(t => [t.id, t]));
+    // teamMap covers ALL teams so player results always get their auction team
+    const teamMap = Object.fromEntries((allTeams || []).map(t => [t.id, t]));
+    const playerNames = (players || []).map(p => p.name);
+
+    let ptsMap = {};
+    if (playerNames.length > 0 && seasonId) {
+      const { data: latestRow } = await supabase
+        .from('player_points_history')
+        .select('snapshot_date')
+        .eq('season', seasonId)
+        .order('snapshot_date', { ascending: false })
+        .limit(1)
+        .single();
+      if (latestRow?.snapshot_date) {
+        const { data: pts } = await supabase
+          .from('player_points_history')
+          .select('player_name, points')
+          .eq('season', seasonId)
+          .eq('snapshot_date', latestRow.snapshot_date)
+          .in('player_name', playerNames);
+        ptsMap = Object.fromEntries((pts || []).map(r => [r.player_name, parseFloat(r.points)]));
+      }
+    }
 
     res.json({
       teams: (teams || []).map(t => ({
@@ -38,6 +61,7 @@ router.get('/', async (req, res) => {
           iplTeam: p.ipl_team || '',
           isCaptain: p.is_captain,
           isOverseas: p.is_overseas,
+          points: ptsMap[p.name] ?? 0,
           fantasyTeam: team ? {
             id: team.id,
             name: fx(team.name),

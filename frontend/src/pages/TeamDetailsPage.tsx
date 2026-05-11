@@ -4,6 +4,8 @@ import { fetchTeam, fetchTeams, fetchChampions, fetchUpcomingFixtures, fetchTrad
 import { getIplLogo, getIplShort } from '../utils/iplTeams';
 import { cn } from '../lib/utils';
 import { Team, Player } from '../types';
+import { TeamLogo } from '../components/TeamLogo';
+import { PlayerPhoto } from '../components/PlayerPhoto';
 
 function ordinal(n: number): string {
   if (!n) return '';
@@ -136,12 +138,7 @@ export function TeamDetailsPage() {
                     className="flex-shrink-0 flex items-center justify-center transition-all duration-300"
                     style={{ opacity: isActive ? 1 : 0.35 }}
                   >
-                    <img
-                      src={`/logos/${t.id}.png`}
-                      alt={t.shortName}
-                      className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain"
-                      onError={e => { (e.target as HTMLImageElement).src = t.logoUrl; }}
-                    />
+                    <TeamLogo team={t} className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20" />
                   </Link>
                 );
               })}
@@ -209,7 +206,7 @@ export function TeamDetailsPage() {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0">
                 <div className="absolute inset-0 rounded-full blur-xl pointer-events-none" style={{ backgroundColor: `${secondary}38` }} />
-                <img src={`/logos/${team.id}.png`} alt={team.name} className="relative w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = team.logoUrl; }} style={{ filter: `drop-shadow(0 0 10px ${primary}80)` }} />
+                <TeamLogo team={team} className="relative w-full h-full" style={{ filter: `drop-shadow(0 0 10px ${primary}80)` }} />
               </div>
 
               <div className="min-w-0">
@@ -265,12 +262,7 @@ export function TeamDetailsPage() {
                   className="flex-shrink-0 transition-all duration-300"
                   style={{ opacity: isActive ? 1 : 0.28 }}
                 >
-                  <img
-                    src={`/logos/${t.id}.png`}
-                    alt={t.shortName}
-                    className="w-16 h-16 lg:w-24 lg:h-24 object-contain"
-                    onError={e => { (e.target as HTMLImageElement).src = t.logoUrl; }}
-                  />
+                  <TeamLogo team={t} className="w-16 h-16 lg:w-24 lg:h-24" />
                 </Link>
               );
             })}
@@ -727,7 +719,7 @@ function TradeCard({ trade, playersIn, playersOut, otherTeam, ptIn, ptOut, net, 
           {otherTeam && (
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-gray-400">vs</span>
-              <img src={`/logos/${otherTeam.id}.png`} alt={otherTeam.shortName} className="w-5 h-5 object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <TeamLogo team={otherTeam} className="w-5 h-5" />
               <span className="text-xs font-black" style={{ color: otherTeam.colors.primary }}>{otherTeam.shortName}</span>
             </div>
           )}
@@ -779,9 +771,7 @@ function TradeCard({ trade, playersIn, playersOut, otherTeam, ptIn, ptOut, net, 
 
 function TradePlayerChip({ player, mode }: { player: TradePlayer; mode: 'alltime' | 'since_trade' }) {
   const navigate = useNavigate();
-  const [imgErr, setImgErr] = useState(false);
   const pts = mode === 'alltime' ? player.points_alltime : player.points_since_trade;
-  const initials = player.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   const canNav = !!player.apiId;
 
   return (
@@ -789,16 +779,7 @@ function TradePlayerChip({ player, mode }: { player: TradePlayer; mode: 'alltime
       className={cn('flex flex-col items-center gap-1 w-14', canNav ? 'cursor-pointer' : '')}
       onClick={() => canNav && navigate(`/player/${player.apiId}`)}
     >
-      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-xs font-black text-gray-400 flex-shrink-0">
-        {player.apiId && !imgErr ? (
-          <img
-            src={`https://fantasy.iplt20.com/classic/static-assets/build/images/players/onpitch/${player.apiId}.png`}
-            alt={player.name}
-            className="w-full h-full object-cover object-top"
-            onError={() => setImgErr(true)}
-          />
-        ) : initials}
-      </div>
+      <PlayerPhoto apiId={player.apiId} name={player.name} shape="square" className="w-10 h-10 text-xs" />
       <div className="text-center w-full">
         <div className="text-[9px] font-bold text-gray-700 leading-tight truncate">{player.name.split(' ').pop()}</div>
         <div className="num text-[9px] text-gray-400">{Math.round(pts)}</div>

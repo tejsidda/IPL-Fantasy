@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Team } from '../types';
 import { TrophyIcon, MedalIcon } from '../components/Icons';
+import { TeamLogo } from '../components/TeamLogo';
 
 const EMPTY: LeaderboardData = { standings: [], chartData: [], topPerformers: [] };
 
@@ -15,6 +16,7 @@ export const LeaderboardPage: React.FC = () => {
   const [loading, setLoading]         = useState(true);
   const [showPast, setShowPast]       = useState(false);
   const [expandedTable, setExpandedTable] = useState(false);
+  const [range, setRange]             = useState<'alltime' | 'week' | 'today'>('alltime');
 
   useEffect(() => {
     fetchSeasons().then(s => {
@@ -40,7 +42,22 @@ export const LeaderboardPage: React.FC = () => {
     return () => window.removeEventListener('orientationchange', handler);
   }, []);
 
-  const sortedTeams    = [...data.standings].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+  const valueFor = (t: Team) =>
+    range === 'today' ? (t.pointsChange ?? 0)
+    : range === 'week' ? (t.points_week ?? 0)
+    : (t.points ?? 0);
+
+  const sortedTeams = (() => {
+    const ranked = [...data.standings].sort((a, b) => valueFor(b) - valueFor(a));
+    const topVal = ranked[0] ? valueFor(ranked[0]) : 0;
+    return ranked.map((t, i) => ({
+      ...t,
+      rank: i + 1,
+      points: valueFor(t),
+      gapToFirst: i === 0 ? 0 : parseFloat((topVal - valueFor(t)).toFixed(2)),
+      gapToNext:  i === 0 ? 0 : parseFloat((valueFor(ranked[i - 1]) - valueFor(t)).toFixed(2)),
+    }));
+  })();
   const activeSeason   = seasons.find(s => s.is_active);
   const pastSeasons    = seasons.filter(s => !s.is_active).sort((a, b) => b.id.localeCompare(a.id));
   const selectedObj    = seasons.find(s => s.id === selectedSeason);
@@ -133,9 +150,7 @@ export const LeaderboardPage: React.FC = () => {
             >
               <div className="absolute inset-0 pointer-events-none"
                    style={{ background: 'radial-gradient(circle at 80% 15%, rgba(255,255,255,0.25) 0%, transparent 55%)' }} />
-              <img src={`/logos/${champion.id}.png`} alt={champion.name}
-                   className="w-12 h-12 sm:w-16 sm:h-16 object-contain relative z-10 flex-shrink-0 drop-shadow-lg"
-                   onError={e => { (e.target as HTMLImageElement).src = champion.logoUrl; }} />
+              <TeamLogo team={champion} className="w-12 h-12 sm:w-16 sm:h-16 relative z-10 drop-shadow-lg" />
               <div className="relative z-10 min-w-0">
                 <div className="flex items-center gap-1 text-[9px] sm:text-micro font-black uppercase tracking-widest text-yellow-100 mb-0.5">
                   <TrophyIcon className="w-3 h-3 flex-shrink-0" /> Champion
@@ -157,9 +172,7 @@ export const LeaderboardPage: React.FC = () => {
               >
                 <div className="absolute inset-0 pointer-events-none"
                      style={{ background: 'radial-gradient(circle at 80% 15%, rgba(255,255,255,0.15) 0%, transparent 55%)' }} />
-                <img src={`/logos/${runnerUp.id}.png`} alt={runnerUp.name}
-                     className="w-12 h-12 sm:w-16 sm:h-16 object-contain relative z-10 flex-shrink-0 drop-shadow-lg"
-                     onError={e => { (e.target as HTMLImageElement).src = runnerUp.logoUrl; }} />
+                <TeamLogo team={runnerUp} className="w-12 h-12 sm:w-16 sm:h-16 relative z-10 drop-shadow-lg" />
                 <div className="relative z-10 min-w-0">
                   <div className="flex items-center gap-1 text-[9px] sm:text-micro font-black uppercase tracking-widest text-gray-300 mb-0.5">
                     <MedalIcon className="w-3 h-3 flex-shrink-0" tone="silver" /> Runner-up
@@ -181,19 +194,39 @@ export const LeaderboardPage: React.FC = () => {
 
         {/* Standings table */}
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-border-light overflow-hidden relative">
-          {/* Expand button — mobile only */}
-          <div className="md:hidden flex justify-end px-3 pt-3">
-            <button
-              onClick={() => setExpandedTable(true)}
-              className="flex items-center gap-1.5 text-label font-bold uppercase tracking-wider text-gray-500 hover:text-gray-800 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors"
-              aria-label="Expand table to full screen"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-              </svg>
-              <span>Expand</span>
-            </button>
-          </div>
+          {/* Range toggle + Expand button */}
+          {(isActiveSeason || true) && (
+            <div className="flex items-center justify-between px-4 pt-4 pb-1 gap-2">
+              {isActiveSeason ? (
+                <div className="inline-flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
+                  {(['alltime', 'week', 'today'] as const).map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setRange(r)}
+                      className={cn(
+                        'text-xs font-bold px-3.5 py-1.5 rounded-full transition-all whitespace-nowrap',
+                        range === r
+                          ? 'bg-gray-900 text-white shadow-sm'
+                          : 'text-gray-500 hover:text-gray-800'
+                      )}
+                    >
+                      {r === 'alltime' ? 'All-Time' : r === 'week' ? 'This Week' : 'Today'}
+                    </button>
+                  ))}
+                </div>
+              ) : <div />}
+              <button
+                onClick={() => setExpandedTable(true)}
+                className="md:hidden flex items-center gap-1.5 text-label font-bold uppercase tracking-wider text-gray-500 hover:text-gray-800 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
+                aria-label="Expand table to full screen"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+                <span>Expand</span>
+              </button>
+            </div>
+          )}
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[640px]">
@@ -201,8 +234,10 @@ export const LeaderboardPage: React.FC = () => {
                 <tr className="text-gray-400 text-micro font-black uppercase tracking-widest">
                   <th className="p-4 text-center w-12">#</th>
                   <th className="p-4 pl-2 min-w-[180px] sticky left-0 bg-surface-subtle z-20">Team</th>
-                  <th className="p-4 text-right whitespace-nowrap">Points</th>
-                  {isActiveSeason && (
+                  <th className="p-4 text-right whitespace-nowrap">
+                    {range === 'today' ? 'Today' : range === 'week' ? 'This Week' : 'Points'}
+                  </th>
+                  {isActiveSeason && range === 'alltime' && (
                     <th className="p-4 text-right whitespace-nowrap">Today</th>
                   )}
                   <th className="p-4 text-right whitespace-nowrap">Gap to P1</th>
@@ -212,18 +247,18 @@ export const LeaderboardPage: React.FC = () => {
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={colCount} className="p-10 text-center text-gray-400 text-sm">
+                    <td colSpan={isActiveSeason && range === 'alltime' ? 6 : 5} className="p-10 text-center text-gray-400 text-sm">
                       Loading standings...
                     </td>
                   </tr>
                 ) : sortedTeams.length === 0 ? (
                   <tr>
-                    <td colSpan={colCount} className="p-10 text-center text-gray-400 text-sm">
+                    <td colSpan={isActiveSeason && range === 'alltime' ? 6 : 5} className="p-10 text-center text-gray-400 text-sm">
                       No data yet — import history or run a sync first.
                     </td>
                   </tr>
                 ) : sortedTeams.map(team => (
-                  <StandingsRow key={team.id} team={team} isActiveSeason={isActiveSeason} />
+                  <StandingsRow key={team.id} team={team} isActiveSeason={isActiveSeason} range={range} />
                 ))}
               </tbody>
             </table>
@@ -274,6 +309,7 @@ export const LeaderboardPage: React.FC = () => {
         onClose={() => setExpandedTable(false)}
         teams={sortedTeams}
         isActiveSeason={isActiveSeason}
+        range={range}
       />
 
       {/* Chart */}
@@ -336,8 +372,7 @@ function TopPerformerRow({ rank, performer, matchedTeam, canNav }: {
           <div className="font-bold text-[13px] text-gray-900 truncate">{performer.name}</div>
           <div className="flex items-center gap-1 mt-0.5">
             {matchedTeam && (
-              <img src={`/logos/${matchedTeam.id}.png`} alt="" className="w-3 h-3 object-contain flex-shrink-0"
-                   onError={e => { (e.target as HTMLImageElement).src = matchedTeam.logoUrl; }} />
+              <TeamLogo team={matchedTeam} className="w-3 h-3" />
             )}
             <span className="text-micro text-gray-400 font-bold truncate">{performer.team}</span>
           </div>
@@ -350,7 +385,8 @@ function TopPerformerRow({ rank, performer, matchedTeam, canNav }: {
   );
 }
 
-function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: boolean }) {
+function StandingsRow({ team, isActiveSeason, range }: { team: Team; isActiveSeason: boolean; range?: 'alltime' | 'week' | 'today' }) {
+  const isAllTime  = !range || range === 'alltime';
   const rankChange = team.rankChange ?? 0;
   const todayGain  = team.pointsChange ?? 0;
   const gapToFirst = team.gapToFirst ?? 0;
@@ -377,12 +413,12 @@ function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: bo
         ) : (
           <div className="flex flex-col items-center">
             <span className="font-black text-sm text-gray-800">{rank}</span>
-            {isActiveSeason && rankChange > 0 && (
+            {isActiveSeason && isAllTime && rankChange > 0 && (
               <svg className="text-green-500 w-2.5 h-2.5 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 4l-8 12h16z" />
               </svg>
             )}
-            {isActiveSeason && rankChange < 0 && (
+            {isActiveSeason && isAllTime && rankChange < 0 && (
               <svg className="text-red-500 w-2.5 h-2.5 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 20l8-12H4z" />
               </svg>
@@ -394,8 +430,7 @@ function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: bo
       {/* Team */}
       <td className="p-4 pl-2 sticky left-0 bg-white group-hover:bg-gray-50 transition-colors">
         <Link to={`/team/${team.id}`} className="flex items-center gap-3 group-hover:opacity-80 transition-opacity">
-          <img src={`/logos/${team.id}.png`} alt={team.shortName} className="w-10 h-10 flex-shrink-0 object-contain"
-               onError={e => { (e.target as HTMLImageElement).src = team.logoUrl; }} />
+          <TeamLogo team={team} size="md" />
           <div className="min-w-0">
             <span className="font-bold text-gray-900 text-sm block truncate">{team.name}</span>
             {!isActiveSeason && isFirst  && (
@@ -410,13 +445,21 @@ function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: bo
 
       {/* Points */}
       <td className="p-4 text-right">
-        <span className="num text-gray-900">
-          {(team.points ?? 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-        </span>
+        {isAllTime ? (
+          <span className="num text-gray-900">
+            {(team.points ?? 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+          </span>
+        ) : (team.points ?? 0) > 0 ? (
+          <span className="num text-base font-black text-green-600">
+            +{(team.points ?? 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+          </span>
+        ) : (
+          <span className="text-gray-300 text-sm">—</span>
+        )}
       </td>
 
-      {/* Today — active season only */}
-      {isActiveSeason && (
+      {/* Today — only in all-time view */}
+      {isActiveSeason && isAllTime && (
         <td className="p-4 text-right">
           {todayGain > 0 ? (
             <span className="num text-sm text-green-600">
@@ -457,12 +500,13 @@ function StandingsRow({ team, isActiveSeason }: { team: Team; isActiveSeason: bo
 }
 
 function ExpandedTableOverlay({
-  open, onClose, teams, isActiveSeason,
+  open, onClose, teams, isActiveSeason, range,
 }: {
   open: boolean;
   onClose: () => void;
   teams: Team[];
   isActiveSeason: boolean;
+  range?: 'alltime' | 'week' | 'today';
 }) {
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -511,8 +555,10 @@ function ExpandedTableOverlay({
             <tr className="text-gray-400 text-micro font-black uppercase tracking-widest">
               <th className="p-4 text-center w-12">#</th>
               <th className="p-4 pl-2 min-w-[180px]">Team</th>
-              <th className="p-4 text-right whitespace-nowrap">Points</th>
-              {isActiveSeason && (
+              <th className="p-4 text-right whitespace-nowrap">
+                {range === 'today' ? 'Today' : range === 'week' ? 'This Week' : 'Points'}
+              </th>
+              {isActiveSeason && (!range || range === 'alltime') && (
                 <th className="p-4 text-right whitespace-nowrap">Today</th>
               )}
               <th className="p-4 text-right whitespace-nowrap">Gap to P1</th>
@@ -521,7 +567,7 @@ function ExpandedTableOverlay({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {teams.map(team => (
-              <StandingsRow key={team.id} team={team} isActiveSeason={isActiveSeason} />
+              <StandingsRow key={team.id} team={team} isActiveSeason={isActiveSeason} range={range} />
             ))}
           </tbody>
         </table>
